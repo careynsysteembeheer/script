@@ -18,6 +18,19 @@ function Write-Log {
 
 Write-Log "Script gestart"
 
+# Forceer Azure AD registratie
+Write-Log "Azure AD registratie gestart..."
+$Result = dsregcmd.exe /join
+$ExitCode = $LASTEXITCODE
+
+if ($ExitCode -eq 0) {
+    Write-Log "Azure AD registratie succesvol."
+} else {
+    Write-Log "FOUT: Azure AD registratie mislukt. ExitCode: $ExitCode"
+    Write-Log "Resultaat: $Result"
+}
+
+
 # Forceer groepsbeleid update
 Write-Log "Groepsbeleid update gestart..."
 gpupdate /force
