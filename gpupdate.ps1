@@ -16,25 +16,37 @@ function Write-Log {
 
 Write-Log "=== SCRIPT START ==="
 
-# 1. Status check
-$status = (dsregcmd.exe /status) -join ""
-if ($status -match "AzureAdJoined\s*:\s*YES") {
-    Write-Log "Device is al AzureADJoined. Geen registratie nodig."
+# 1. Direct aan het begin: GPupdate
+Write-Log "Groepsbeleid update gestart..."
+gpupdate /force | Out-Null
+if ($LASTEXITCODE -eq 0) {
+    Write-Log "Groepsbeleid update geslaagd."
 } else {
+    Write-Log "FOUT: Groepsbeleid update mislukt. ExitCode: $LASTEXITCODE"
+}
+
+# 2. Loop tot Azure AD join gelukt is
+while ($true) {
+
+    $status = (dsregcmd.exe /status) -join ""
+    if ($status -match "AzureAdJoined\s*:\s*YES") {
+        Write-Log "Device is AzureADJoined. Klaar!"
+        break
+    }
+
     Write-Log "Device is NIET AzureADJoined. Azure AD herregistratie nodig."
 
-    # 2. Force cleanup
     Write-Log "Opruimen oude device registraties..."
     dsregcmd /leave | Out-Null
 
-    Try {
+    try {
         Remove-Item -Path "HKLM:\SYSTEM\CurrentControlSet\Control\CloudDomainJoin" -Recurse -Force -ErrorAction SilentlyContinue
         Write-Log "Registry CloudDomainJoin verwijderd."
     } catch {
         Write-Log "Registry CloudDomainJoin kon niet worden verwijderd: $_"
     }
 
-    Try {
+    try {
         $certs = Get-ChildItem Cert:\LocalMachine\My | Where-Object { $_.Subject -like "*MS-Organization*" }
         foreach ($cert in $certs) {
             Remove-Item -Path ("Cert:\LocalMachine\My\" + $cert.Thumbprint) -Force
@@ -44,39 +56,20 @@ if ($status -match "AzureAdJoined\s*:\s*YES") {
         Write-Log "Verwijderen certificaten mislukt: $_"
     }
 
-    # 3. Join opnieuw uitvoeren
     Write-Log "Azure AD registratie proberen..."
     $Result = dsregcmd.exe /join
-    $ExitCode = $LASTEXITCODE
+    $JoinExitCode = $LASTEXITCODE
 
-    if ($ExitCode -eq 0) {
+    if ($JoinExitCode -eq 0) {
         Write-Log "AzureAD Join succesvol."
-    } else {
-        Write-Log "FOUT: Azure AD join mislukt. ExitCode: $ExitCode"
+    } else
+        {
+        Write-Log "FOUT: Azure AD join mislukt. ExitCode: $JoinExitCode"
         Write-Log "Resultaat: $Result"
     }
-}
 
-# 4. GPupdate draaien
-Write-Log "Groepsbeleid update gestart..."
-gpupdate /force | Out-Null
-$ExitCode = $LASTEXITCODE
-
-if ($ExitCode -eq 0) {
-    Write-Log "Groepsbeleid update geslaagd."
-
-    # 5. Check join status na join
-    $status = (dsregcmd.exe /status) -join ""
-    if ($status -match "AzureAdJoined\s*:\s*YES") {
-        Write-Log "Azure AD Join status is OK. Reboot uitvoeren."
-        Restart-Computer -Force
-    } else {
-        Write-Log "Azure AD Join mislukt of niet compleet -> GEEN reboot."
-    }
-
-} else {
-    Write-Log "FOUT: Groepsbeleid update mislukt. ExitCode: $ExitCode"
-    Write-Log "Computer wordt NIET opnieuw opgestart."
+    Write-Log "Join mislukt — wacht 60 seconden en probeer opnieuw..."
+    Start-Sleep -Seconds 60
 }
 
 Write-Log "=== SCRIPT EINDE ==="
