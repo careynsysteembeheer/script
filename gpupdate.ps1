@@ -16,7 +16,7 @@ function Write-Log {
     Write-Output $LogMessage
 }
 
-Write-Log "=== SCRIPT START ==="
+Write-Log "=== SCRIPT START V1.0 ==="
 
 # 1. Direct GPupdate
 Write-Log "Groepsbeleid update gestart..."
