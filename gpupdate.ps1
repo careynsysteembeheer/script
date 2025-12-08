@@ -97,4 +97,24 @@ Register-ScheduledTask -TaskName $TaskName -Action $action -Trigger $trigger -Pr
 
 Write-Log "Scheduled task '$TaskName' aangemaakt en actief."
 
+# Microsoft KB5072911
+$packages = @(
+    "C:\Windows\SystemApps\MicrosoftWindows.Client.CBS_cw5n1h2txyewy\appxmanifest.xml",
+    "C:\Windows\SystemApps\Microsoft.UI.Xaml.CBS_8wekyb3d8bbwe\appxmanifest.xml",
+    "C:\Windows\SystemApps\MicrosoftWindows.Client.Core_cw5n1h2txyewy\appxmanifest.xml"
+)
+
+foreach ($pkg in $packages) {
+    Write-Host "Bezig met registreren van package:" $pkg -ForegroundColor Cyan
+
+    try {
+        Add-AppxPackage -Register -Path $pkg -DisableDevelopmentMode -ErrorAction Stop
+        Write-Host "✔ Registratie gelukt voor: $pkg" -ForegroundColor Green
+    }
+    catch {
+        Write-Host "✖ Fout bij registreren van: $pkg" -ForegroundColor Red
+        Write-Host "  Details: $($_.Exception.Message)" -ForegroundColor DarkRed
+    }
+}
+
 Write-Log "=== SCRIPT EINDE ==="
