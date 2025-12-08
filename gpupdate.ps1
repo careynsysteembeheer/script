@@ -105,15 +105,15 @@ $packages = @(
 )
 
 foreach ($pkg in $packages) {
-    Write-Host "Bezig met registreren van package:" $pkg -ForegroundColor Cyan
+    Write-Log "Bezig met registreren van package:" $pkg -ForegroundColor Cyan
 
     try {
         Add-AppxPackage -Register -Path $pkg -DisableDevelopmentMode -ErrorAction Stop
-        Write-Host "Registratie gelukt voor: $pkg" -ForegroundColor Green
+        Write-Log "Registratie gelukt voor: $pkg" -ForegroundColor Green
     }
     catch {
-        Write-Host "Fout bij registreren van: $pkg" -ForegroundColor Red
-        Write-Host "Details: $($_.Exception.Message)" -ForegroundColor DarkRed
+        Write-Log "Fout bij registreren van: $pkg" -ForegroundColor Red
+        Write-Log "Details: $($_.Exception.Message)" -ForegroundColor DarkRed
     }
 }
 
