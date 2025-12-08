@@ -109,11 +109,11 @@ foreach ($pkg in $packages) {
 
     try {
         Add-AppxPackage -Register -Path $pkg -DisableDevelopmentMode -ErrorAction Stop
-        Write-Host "✔ Registratie gelukt voor: $pkg" -ForegroundColor Green
+        Write-Host "Registratie gelukt voor: $pkg" -ForegroundColor Green
     }
     catch {
-        Write-Host "✖ Fout bij registreren van: $pkg" -ForegroundColor Red
-        Write-Host "  Details: $($_.Exception.Message)" -ForegroundColor DarkRed
+        Write-Host "Fout bij registreren van: $pkg" -ForegroundColor Red
+        Write-Host "Details: $($_.Exception.Message)" -ForegroundColor DarkRed
     }
 }
 
